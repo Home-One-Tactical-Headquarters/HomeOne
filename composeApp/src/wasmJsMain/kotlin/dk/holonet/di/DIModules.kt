@@ -1,6 +1,7 @@
 package dk.holonet.di
 
 import dk.holonet.ui.AppViewModel
+import dk.holonet.ui.editor.EditorViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -32,4 +33,5 @@ val diModules = module {
         }
     }}
     viewModel { AppViewModel(get()) }
+    viewModel { EditorViewModel() }
 }

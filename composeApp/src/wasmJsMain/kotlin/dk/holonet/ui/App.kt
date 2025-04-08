@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import dk.holonet.theme.HoloNetTheme
+import dk.holonet.ui.editor.EditorView
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -30,7 +31,9 @@ fun App(
                 }
             }
 
-            when (uiState) {
+            EditorView()
+
+            /*when (uiState) {
                 is AppViewModel.UiState.Loading -> {
                     Text("Loading...")
                 }
@@ -40,7 +43,7 @@ fun App(
                 is AppViewModel.UiState.Success -> {
                     Text("Success: ${(uiState as AppViewModel.UiState.Success).data}")
                 }
-            }
+            }*/
         }
     }
 }

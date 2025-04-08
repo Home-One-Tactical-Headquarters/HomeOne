@@ -67,6 +67,9 @@ kotlin {
             implementation(libs.ktor.client.cio)
             implementation(libs.ktor.serialization.kotlinx.json)
 
+            // Reorderable
+            implementation(libs.reorderable)
+
             // Holonet Core
             implementation(libs.holonet.core)
         }

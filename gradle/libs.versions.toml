@@ -7,6 +7,7 @@ jetbrains-kotlin-jvm = "2.1.0"
 serialization = "1.8.0"
 ktor-bom = "3.1.1"
 koin-bom = "4.0.2"
+reorderable = "2.4.3"
 
 [libraries]
 # AndroidX
@@ -31,6 +32,9 @@ ktor-client-core = { group = "io.ktor", name = "ktor-client-core"}
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio"}
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json"}
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation"}
+
+# Reorderable
+reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
 
 # Holonet
 holonet-core = { group = "dk.holonet", name = "core", version = "0.0.1" }
