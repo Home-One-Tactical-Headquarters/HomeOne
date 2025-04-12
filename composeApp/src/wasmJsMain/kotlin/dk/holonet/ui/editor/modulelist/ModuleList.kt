@@ -1,6 +1,5 @@
 package dk.holonet.ui.editor.modulelist
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,11 +22,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import compose.icons.LineAwesomeIcons
+import compose.icons.lineawesomeicons.PlusSolid
 import compose.icons.lineawesomeicons.Save
 import dk.holonet.ui.editor.EditorViewModel
 
@@ -64,29 +63,58 @@ internal fun ModulesList(
 
         HorizontalDivider()
 
-        TextButton(
-            onClick = {},
-            modifier = Modifier.fillMaxWidth().height(48.dp),
-            shape = RectangleShape
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
+        Row {
+            TextButton(
+                onClick = {},
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RectangleShape
             ) {
-                Icon(
-                    imageVector = LineAwesomeIcons.Save,
-                    contentDescription = "Add Module",
-                    modifier = Modifier.size(24.dp)
-                )
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = LineAwesomeIcons.PlusSolid,
+                        contentDescription = "Add Module",
+                        modifier = Modifier.size(24.dp)
+                    )
 
-                Spacer(Modifier.width(16.dp))
+                    Spacer(Modifier.width(8.dp))
 
-                Text(
-                    text = "Save",
-                    style = MaterialTheme.typography.labelLarge,
-                    textAlign = TextAlign.Center
-                )
+                    Text(
+                        text = "Add",
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
+
+            TextButton(
+                onClick = {},
+                modifier = Modifier.weight(1f).height(48.dp),
+                shape = RectangleShape
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = LineAwesomeIcons.Save,
+                        contentDescription = "Save configuration",
+                        modifier = Modifier.size(24.dp)
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Text(
+                        text = "Save",
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center
+                    )
+                }
             }
         }
+
+
     }
 }
