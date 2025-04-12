@@ -8,6 +8,7 @@ serialization = "1.8.0"
 ktor-bom = "3.1.1"
 koin-bom = "4.0.2"
 reorderable = "2.4.3"
+composeIcons = "1.1.1"
 
 [libraries]
 # AndroidX
@@ -35,6 +36,9 @@ ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-conte
 
 # Reorderable
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+
+# Compose Icons
+composeIcons-lineAwesome = { module = "br.com.devsrsouza.compose.icons:line-awesome", version.ref = "composeIcons" }
 
 # Holonet
 holonet-core = { group = "dk.holonet", name = "core", version = "0.0.1" }

@@ -1,0 +1,15 @@
+{
+  "name": "Clock",
+  "description": "A simple clock plugin",
+  "author": "Holonet",
+  "version": "1.0.0",
+  "config": {
+    "timezone": {
+      "type": "string",
+      "description": "The timezone to display the clock in",
+      "default": "UTC",
+      "values": ["UTC", "GMT", "EST", "PST", "CET"],
+      "required": true
+    }
+  }
+}

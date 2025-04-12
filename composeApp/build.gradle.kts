@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
 buildscript {
@@ -41,7 +42,7 @@ kotlin {
             // Compose
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material)
+//            implementation(compose.material)
             implementation(compose.material3)
             implementation(compose.ui)
             implementation(compose.components.resources)
@@ -70,8 +71,15 @@ kotlin {
             // Reorderable
             implementation(libs.reorderable)
 
+            // Compose Icons
+            implementation(libs.composeIcons.lineAwesome)
+
             // Holonet Core
             implementation(libs.holonet.core)
+        }
+
+        wasmJsMain.dependencies {
+            
         }
     }
 }

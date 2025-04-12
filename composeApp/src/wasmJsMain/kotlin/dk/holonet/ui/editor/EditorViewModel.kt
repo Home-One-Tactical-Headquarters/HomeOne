@@ -2,7 +2,11 @@ package dk.holonet.ui.editor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dk.holonet.config.ModuleConfig
+import dk.holonet.config.loadConfig
 import dk.holonet.core.Position
+import dk.holonet.example_config.calendarConfig
+import dk.holonet.example_config.clockConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,31 +14,22 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class EditorViewModel: ViewModel() {
-    private val _positions: MutableStateFlow<MutableMap<Position, List<Module>>> = MutableStateFlow(mutableMapOf())
-    val positions: StateFlow<Map<Position, List<Module>>> = _positions.asStateFlow()
+    private val _positions: MutableStateFlow<MutableMap<Position, List<ModuleConfig>>> = MutableStateFlow(mutableMapOf())
+    val positions: StateFlow<Map<Position, List<ModuleConfig>>> = _positions.asStateFlow()
 
-    private val _modules: MutableStateFlow<List<Module>> = MutableStateFlow(emptyList())
-    val modules: StateFlow<List<Module>> = _modules.asStateFlow()
+    private val _modules: MutableStateFlow<List<ModuleConfig>> = MutableStateFlow(emptyList())
+    val modules: StateFlow<List<ModuleConfig>> = _modules.asStateFlow()
 
     init {
         Position.entries.forEach { position ->
             _positions.value[position] = mutableListOf()
         }
 
-        val testList = listOf(Module("Example1"), Module("Example2"))
-//        _positions.value[Position.TOP_BAR] = testList
+        loadModules()
 
         _positions.value.forEach {
             if (it.value.isEmpty()) {
-                _positions.value[it.key] = testList
-            }
-        }
-
-        _modules.value = testList
-
-        viewModelScope.launch {
-            _positions.collectLatest {
-
+                _positions.value[it.key] = _modules.value
             }
         }
     }
@@ -50,8 +45,14 @@ class EditorViewModel: ViewModel() {
             _positions.value = newState
         }
     }
-}
 
-data class Module(
-    val name: String
-)
+    private fun loadModules() {
+        viewModelScope.launch {
+            // Simulate config loading
+            val configs = listOf(calendarConfig, clockConfig)
+            _modules.value = configs.map {
+                loadConfig(it)
+            }
+        }
+    }
+}
