@@ -10,7 +10,6 @@ import dk.holonet.example_config.clockConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class EditorViewModel: ViewModel() {
@@ -39,6 +38,22 @@ class EditorViewModel: ViewModel() {
             val newList = _positions.value[position]?.toMutableList() ?: mutableListOf()
             val module = newList.removeAt(from)
             newList.add(to, module)
+
+            val newState = _positions.value.toMutableMap()
+            newState[position] = newList
+            _positions.value = newState
+        }
+    }
+
+    fun updateModule(position: Position, module: ModuleConfig, isAdded: Boolean) {
+        viewModelScope.launch {
+            val newList = _positions.value[position]?.toMutableList() ?: mutableListOf()
+
+            if (!isAdded && newList.contains(module)) {
+                newList.remove(module)
+            } else {
+                newList.add(module)
+            }
 
             val newState = _positions.value.toMutableMap()
             newState[position] = newList
