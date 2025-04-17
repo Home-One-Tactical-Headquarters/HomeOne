@@ -1,5 +1,6 @@
 package dk.holonet.ui.editor.borderpane
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -12,12 +13,15 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.GripLinesSolid
 import dk.holonet.config.ModuleConfig
+import dk.holonet.ui.dialogs.ModuleConfigDialog
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @Composable
@@ -45,8 +49,10 @@ internal fun ModuleBox(
         Arrangement.spacedBy(8.dp)
     }
 
+    val openDialog = remember { mutableStateOf(false) }
+
     Card(
-        modifier = with(scope) { cardModifier.draggableHandle() }
+        modifier = with(scope) { cardModifier.draggableHandle().clickable { openDialog.value = !openDialog.value } }
     ) {
         Row(
             modifier = rowModifier.padding(8.dp),
@@ -62,10 +68,9 @@ internal fun ModuleBox(
         }
     }
 
-
-    /*Box(with(scope) {
-        newModifier.draggableHandle()
-    }) {
-        Text(moduleConfig.name)
-    }*/
+    when {
+        openDialog.value -> {
+            ModuleConfigDialog(moduleConfig) { openDialog.value = false }
+        }
+    }
 }

@@ -13,6 +13,13 @@ val clockConfig = """
           "default": "UTC",
           "values": ["UTC", "GMT", "EST", "PST", "CET"],
           "required": true
+        },
+        "align": {
+          "type": "string",
+          "description": "The alignment of the clock",
+          "default": "center",
+          "values": ["left", "center", "right"],
+          "required": false
         }
       }
     }
