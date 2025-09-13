@@ -1,176 +1,204 @@
 package dk.holonet.ui.editor.borderpane
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import compose.icons.LineAwesomeIcons
-import compose.icons.lineawesomeicons.PlusSolid
-import dk.holonet.config.ModuleConfig
 import dk.holonet.core.Position
-import dk.holonet.ui.editor.EditorViewModel
-import dk.holonet.ui.prettyPrint
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-internal fun BorderPane(
-    modifier: Modifier,
-    viewModel: EditorViewModel
+fun BorderPane(
+    onPositionClick: (Position) -> Unit
 ) {
-    val state by viewModel.positions.collectAsState()
 
-    Box(modifier = modifier) {
-        // Top bar (light gray), pinned to the top
-        RowComponent(
-            viewModel,
-            modifier = Modifier.align(Alignment.TopCenter),
-            Position.TOP_BAR,
-            state
-        )
-
-        // Bottom bar (light gray), pinned to the bottom
-        RowComponent(
-            viewModel,
-            modifier = Modifier.align(Alignment.BottomCenter),
-            Position.BOTTOM_BAR,
-            state
-        )
-
-        // Main content column, taking the remaining space between top/bottom bars
-        Column(
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(vertical = 80.dp), // Same height used for top/bottom bars
-            verticalArrangement = Arrangement.SpaceBetween
+                .fillMaxWidth(0.5f)
+                .fillMaxHeight()
+                .padding(16.dp)
+                .background(Color.Black)
         ) {
-            // ----------------------
-            // Top row with 3 blocks
-            // ----------------------
-            Row(
+            // Top bar (light gray), pinned to the top
+            Box(
                 modifier = Modifier
+                    .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .weight(2f)
-            ) {
-                // top_left
-                ColumnComponent(
-                    modifier = Modifier.weight(1f),
-                    viewModel = viewModel,
-                    position = Position.TOP_LEFT,
-                    state = state
-                )
+                    .fillMaxHeight(0.05f)
+                    .background(Color.LightGray)
+                    .clickable {
+                        onPositionClick(Position.TOP_BAR)
+                    }
+            )
 
-                // top_center
-                ColumnComponent(
-                    modifier = Modifier.weight(1f),
-                    viewModel = viewModel,
-                    position = Position.TOP_CENTER,
-                    state = state
-                )
+            // Bottom bar (light gray), pinned to the bottom
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.05f)
+                    .background(Color.LightGray)
+                    .clickable {
+                        onPositionClick(Position.BOTTOM_BAR)
+                    }
+            )
 
-                // top_right
-                ColumnComponent(
-                    modifier = Modifier.weight(1f),
-                    viewModel = viewModel,
-                    position = Position.TOP_RIGHT,
-                    state = state
-                )
-            }
-
-            // ---------------------------------------
-            // Middle stack: upper_third, middle_center,
-            // lower_third
-            // ---------------------------------------
+            // Main content column, taking the remaining space between top/bottom bars
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .wrapContentHeight()
+                    .fillMaxHeight(0.9f)
+                    .align(Alignment.Center),
+                verticalArrangement = Arrangement.SpaceBetween,
             ) {
-                // upper_third
-                RowComponent(
-                    modifier = Modifier.fillMaxWidth(),
-                    viewModel = viewModel,
-                    position = Position.UPPER_THIRD,
-                    state = state
-                )
+                // ----------------------
+                // Top row with 3 blocks
+                // ----------------------
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(2f)
+                        .padding(0.dp, 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Top-left
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color.Red)
+                            .clickable {
+                                onPositionClick(Position.TOP_LEFT)
+                            }
+                    )
 
-                // middle_center
-                RowComponent(
-                    modifier = Modifier.fillMaxWidth(),
-                    viewModel = viewModel,
-                    position = Position.MIDDLE_THIRD,
-                    state = state
-                )
+                    // Top-center
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color.Blue)
+                            .clickable {
+                                onPositionClick(Position.TOP_CENTER)
+                            }
+                    )
 
+                    // Top-right
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color.Green)
+                            .clickable {
+                                onPositionClick(Position.TOP_RIGHT)
+                            }
+                    )
+                }
+
+                // ---------------------------------------
+                // Middle stack:
+                // upper_third,
+                // middle_center,
                 // lower_third
-                RowComponent(
-                    modifier = Modifier.fillMaxWidth(),
-                    viewModel = viewModel,
-                    position = Position.LOWER_THIRD,
-                    state = state
-                )
-            }
+                // ---------------------------------------
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(2f)
+                        .padding(0.dp, 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Upper third
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .background(Color.Yellow)
+                            .clickable {
+                                onPositionClick(Position.UPPER_THIRD)
+                            }
+                    )
 
-            // -------------------------
-            // Bottom row with 3 blocks
-            // -------------------------
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(2f),
-                verticalAlignment = Alignment.Bottom
-            ) {
-                // bottom_left
-                ColumnComponent(
-                    modifier = Modifier.weight(1f),
-                    viewModel = viewModel,
-                    position = Position.BOTTOM_LEFT,
-                    state = state
-                )
+                    // Middle center
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .background(Color.Cyan)
+                            .clickable {
+                                onPositionClick(Position.MIDDLE_THIRD)
+                            }
+                    )
 
-                // bottom_center
-                ColumnComponent(
-                    modifier = Modifier.weight(1f),
-                    viewModel = viewModel,
-                    position = Position.BOTTOM_CENTER,
-                    state = state
-                )
+                    // Lower third
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .background(Color.Magenta)
+                            .clickable {
+                                onPositionClick(Position.LOWER_THIRD)
+                            }
+                    )
+                }
 
-                // bottom_right
-                ColumnComponent(
-                    modifier = Modifier.weight(1f),
-                    viewModel = viewModel,
-                    position = Position.BOTTOM_RIGHT,
-                    state = state
-                )
+                // -------------------------
+                // Bottom row with 3 blocks
+                // -------------------------
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(2f)
+                        .padding(0.dp, 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Bottom-left
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color.Red)
+                            .clickable {
+                                onPositionClick(Position.BOTTOM_LEFT)
+                            }
+                    )
+
+                    // Bottom-center
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color.Blue)
+                            .clickable {
+                                onPositionClick(Position.BOTTOM_CENTER)
+                            }
+                    )
+
+                    // Bottom-right
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .background(Color.Green)
+                            .clickable {
+                                onPositionClick(Position.BOTTOM_RIGHT)
+                            }
+                    )
+                }
             }
         }
     }

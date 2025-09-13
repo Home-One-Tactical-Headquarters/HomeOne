@@ -1,5 +1,6 @@
 package dk.holonet.ui.editor.modulelist
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,6 +37,7 @@ internal fun ModulesList(
     viewModel: EditorViewModel
 ) {
     val state by viewModel.modules.collectAsState()
+    val currentPosition by viewModel.currentPosition.collectAsState()
 
     Column(
         modifier = modifier
@@ -56,7 +58,10 @@ internal fun ModulesList(
         ) {
             items(state) { module ->
                 ModuleConfigBox(
-                    module = module
+                    module = module,
+                    modifier = if (currentPosition != null) Modifier.clickable {
+                        viewModel.addModule(module)
+                    } else Modifier
                 )
             }
         }
@@ -90,7 +95,9 @@ internal fun ModulesList(
             }
 
             TextButton(
-                onClick = {},
+                onClick = {
+                    viewModel.saveConfiguration()
+                },
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RectangleShape
             ) {

@@ -52,6 +52,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
 
+            // Navigation
+            implementation(libs.navigation)
+
             // Serialization
             implementation(libs.kotlinx.serialization.json)
 
@@ -61,6 +64,7 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
             implementation(libs.ktor.client.content.negotiation)
+            implementation("io.insert-koin:koin-compose-viewmodel-navigation:4.1.1")
 
             // Ktor
             implementation(project.dependencies.platform(libs.ktor.bom))

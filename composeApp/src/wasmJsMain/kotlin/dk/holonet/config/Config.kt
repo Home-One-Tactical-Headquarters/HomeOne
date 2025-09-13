@@ -1,5 +1,6 @@
 package dk.holonet.config
 
+import dk.holonet.core.ModuleConfiguration
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
@@ -9,7 +10,8 @@ data class ModuleConfig(
     val description: String? = null,
     val author: String? = null,
     val version: String,
-    val config: Map<String, ConfigProperty>
+    val config: Map<String, ConfigProperty>,
+    var instance: ModuleConfiguration? = null // Specific instance of the module configuration. Defined later
 )
 
 @Serializable

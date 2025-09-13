@@ -1,9 +1,5 @@
 package dk.holonet.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,19 +14,20 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.SyncSolid
 import dk.holonet.theme.HoloNetTheme
 import dk.holonet.ui.editor.EditorView
 import org.koin.compose.viewmodel.koinViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(
     viewModel: AppViewModel = koinViewModel(),
+    onNavHostReady: suspend (NavController) -> Unit = {}
 ) {
     HoloNetTheme(true) {
         val uiState by viewModel.state.collectAsState()
@@ -55,7 +52,7 @@ fun App(
                                     )
                                 }
                             }
-                        ){
+                        ) {
                             IconButton(onClick = { viewModel.fetch() }) {
                                 Icon(
                                     imageVector = LineAwesomeIcons.SyncSolid,
@@ -68,9 +65,13 @@ fun App(
                 )
             }
         ) { paddingValues ->
+            EditorView(
+                paddingValues = paddingValues,
+                onNavHostReady = onNavHostReady
+            )
 
-            Column(Modifier.padding(paddingValues).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                /*Row {
+            /*Column(Modifier.padding(paddingValues).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Row {
                     Button(onClick = { viewModel.fetch() }) {
                         Text("Fetch configuration!")
                     }
@@ -78,11 +79,9 @@ fun App(
                     Button(onClick = { viewModel.update() }) {
                         Text("Update configuration!")
                     }
-                }*/
+                }
 
-                EditorView()
-
-                /*when (uiState) {
+                when (uiState) {
                     is AppViewModel.UiState.Loading -> {
                         Text("Loading...")
                     }
@@ -92,8 +91,8 @@ fun App(
                     is AppViewModel.UiState.Success -> {
                         Text("Success: ${(uiState as AppViewModel.UiState.Success).data}")
                     }
-                }*/
-            }
+                }
+            }*/
         }
     }
 }

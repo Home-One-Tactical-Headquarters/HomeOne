@@ -9,6 +9,7 @@ ktor-bom = "3.2.3"
 koin-bom = "4.1.1"
 reorderable = "2.4.3"
 composeIcons = "1.1.1"
+navigation = "2.9.0-beta05"
 
 [libraries]
 # AndroidX
@@ -17,6 +18,9 @@ androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle
 
 # Coroutines
 kotlinx-coroutines-swing = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-swing", version.ref = "kotlinx-coroutines" }
+
+# Navigation
+navigation = { group = "org.jetbrains.androidx.navigation", name = "navigation-compose", version.ref = "navigation" }
 
 # Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
@@ -33,6 +37,10 @@ ktor-client-core = { group = "io.ktor", name = "ktor-client-core"}
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio"}
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json"}
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation"}
+ktor-server-core = { group = "io.ktor", name = "ktor-server-core"}
+ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty"}
+ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation"}
+ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors"}
 
 # Reorderable
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
@@ -41,7 +49,7 @@ reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reo
 composeIcons-lineAwesome = { module = "br.com.devsrsouza.compose.icons:line-awesome", version.ref = "composeIcons" }
 
 # Holonet
-holonet-core = { group = "dk.holonet", name = "core", version = "0.0.1" }
+holonet-core = { group = "dk.holonet", name = "core", version = "0.0.2" }
 
 [plugins]
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }

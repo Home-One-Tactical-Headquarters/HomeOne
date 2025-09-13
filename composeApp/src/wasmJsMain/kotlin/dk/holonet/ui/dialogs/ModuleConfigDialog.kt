@@ -4,11 +4,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
@@ -18,6 +18,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,12 +36,30 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import dk.holonet.config.ConfigProperty
 import dk.holonet.config.ModuleConfig
+import dk.holonet.core.Position
+import dk.holonet.ui.editor.EditorViewModel
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.encodeToJsonElement
+import org.koin.compose.koinInject
 
 @Composable
 fun ModuleConfigDialog(
     moduleConfig: ModuleConfig,
+    position: Position,
+    editorViewModel: EditorViewModel = koinInject(),
     onDismissRequest: () -> Unit
 ) {
+    // Initializing a mutable map to hold the configuration values with default values
+    val configMap = mutableMapOf<String, JsonElement>()
+    moduleConfig.config.forEach { (key, value) ->
+        println("Instance config: ${moduleConfig.instance?.config.toString()}")
+
+        configMap[key] = moduleConfig.instance?.config?.get(key)
+            ?: value.default?.asJsonElement()
+                    ?: "".asJsonElement()
+    }
+
     Dialog(
         onDismissRequest = { onDismissRequest() },
         properties = DialogProperties(
@@ -49,7 +68,6 @@ fun ModuleConfigDialog(
     ) {
         Card(
             modifier = Modifier
-                .fillMaxHeight(0.9f)
                 .fillMaxWidth(0.4f)
                 .padding(16.dp),
             shape = RoundedCornerShape(16.dp)
@@ -64,14 +82,45 @@ fun ModuleConfigDialog(
                 textAlign = TextAlign.Center
             )
 
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
+                    .weight(1f)
             ) {
-                moduleConfig.config.forEach { (key, value) ->
+                items(moduleConfig.config.size) { index ->
+                    val (key, value) = moduleConfig.config.entries.elementAt(index)
+                    ConfigEntry(
+                        key,
+                        value,
+                        onValueChange = { newValue ->
+                            configMap[key] = newValue.asJsonElement()
+                        })
+                    if (index < moduleConfig.config.size - 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
+
+                /*moduleConfig.config.forEach { (key, value) ->
                     ConfigEntry(key, value)
                     Spacer(modifier = Modifier.height(8.dp))
+                }*/
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(onClick = {}) {
+                    Text("Cancel")
+                }
+
+                TextButton(onClick = {
+                    // Save the configuration
+                    editorViewModel.updateModuleConfig(position, moduleConfig, configMap)
+                    onDismissRequest()
+                }) {
+                    Text("Save")
                 }
             }
         }
@@ -82,7 +131,8 @@ fun ModuleConfigDialog(
 @Composable
 fun ConfigEntry(
     key: String,
-    config: ConfigProperty
+    config: ConfigProperty,
+    onValueChange: ((String) -> Unit),
 ) {
     val name = if (config.required) {
         buildAnnotatedString {
@@ -108,7 +158,7 @@ fun ConfigEntry(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(0.5f),
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(text = name)
@@ -120,24 +170,34 @@ fun ConfigEntry(
             }
         }
 
+        val inputModifier = Modifier.weight(1f)
+
         when {
             config.values.isNullOrEmpty() -> {
                 TextField(
                     value = input,
-                    onValueChange = { input = it },
+                    onValueChange = {
+                        input = it
+                        onValueChange(it)
+                    },
                     label = { Text(key) },
-                    modifier = Modifier.fillMaxWidth(0.9f),
+                    modifier = inputModifier,
                 )
             }
+
             config.values.isNotEmpty() -> {
                 ExposedDropdownMenuBox(
                     expanded = expanded,
-                    onExpandedChange = { expanded = it }
+                    onExpandedChange = { expanded = it },
+                    modifier = inputModifier
                 ) {
                     TextField(
                         value = input,
                         modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
-                        onValueChange = { input = it },
+                        onValueChange = {
+                            input = it
+                            onValueChange(it)
+                        },
                         readOnly = true,
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
                     )
@@ -152,6 +212,7 @@ fun ConfigEntry(
                                 onClick = {
                                     input = option
                                     expanded = false
+                                    onValueChange(option)
                                 },
                                 contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                             )
@@ -162,3 +223,5 @@ fun ConfigEntry(
         }
     }
 }
+
+fun String.asJsonElement(): JsonElement = Json.encodeToJsonElement(this)

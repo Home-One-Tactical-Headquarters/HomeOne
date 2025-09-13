@@ -13,15 +13,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.GripLinesSolid
 import dk.holonet.config.ModuleConfig
-import dk.holonet.ui.dialogs.ModuleConfigDialog
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @Composable
@@ -30,47 +27,37 @@ internal fun ModuleBox(
     scope: ReorderableCollectionItemScope,
     moduleConfig: ModuleConfig,
     fillMaxWidth: Boolean = true,
+    onClick: () -> Unit = { }
 ) {
-    val cardModifier = if (fillMaxWidth) {
-        modifier.fillMaxWidth().height(48.dp)
-    } else {
-        modifier.fillMaxHeight().fillMaxWidth(0.25f)
-    }
+    val cardModifier = if (fillMaxWidth) modifier.fillMaxWidth().height(48.dp)
+        else modifier.fillMaxHeight().fillMaxWidth()
 
-    val rowModifier = if (fillMaxWidth) {
-        Modifier.fillMaxSize()
-    } else {
-        Modifier.fillMaxHeight()
-    }
+    val rowModifier = if (fillMaxWidth) Modifier.fillMaxSize()
+        else Modifier.fillMaxHeight()
 
-    val horizontalArrangement = if (fillMaxWidth) {
-        Arrangement.SpaceBetween
-    } else {
-        Arrangement.spacedBy(8.dp)
-    }
-
-    val openDialog = remember { mutableStateOf(false) }
+    val horizontalArrangement = if (fillMaxWidth) Arrangement.SpaceBetween
+        else Arrangement.SpaceBetween
 
     Card(
-        modifier = with(scope) { cardModifier.draggableHandle().clickable { openDialog.value = !openDialog.value } }
+        modifier = with(scope) {
+            cardModifier
+                .draggableHandle()
+                .clickable { onClick() }
+        }
     ) {
         Row(
-            modifier = rowModifier.padding(8.dp),
+            modifier = rowModifier.padding(8.dp).fillMaxWidth(),
             horizontalArrangement = horizontalArrangement,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(moduleConfig.name)
+            Text(text = moduleConfig.name)
+
             Icon(
                 imageVector = LineAwesomeIcons.GripLinesSolid,
                 contentDescription = "Drag handle",
-                modifier = Modifier.size(24.dp).align(Alignment.CenterVertically)
+                modifier = Modifier
+                    .size(24.dp)
             )
-        }
-    }
-
-    when {
-        openDialog.value -> {
-            ModuleConfigDialog(moduleConfig) { openDialog.value = false }
         }
     }
 }
