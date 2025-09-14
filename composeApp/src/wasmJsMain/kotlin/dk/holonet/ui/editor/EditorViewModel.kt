@@ -2,12 +2,16 @@ package dk.holonet.ui.editor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dk.holonet.config.ModuleConfig
 import dk.holonet.config.loadConfig
+import dk.holonet.core.HolonetSchema
 import dk.holonet.core.ModuleConfiguration
 import dk.holonet.core.Position
 import dk.holonet.example_config.calendarConfig
 import dk.holonet.example_config.clockConfig
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,12 +19,14 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
-class EditorViewModel: ViewModel() {
-    private val _positions: MutableStateFlow<MutableMap<Position, List<ModuleConfig>>> = MutableStateFlow(mutableMapOf())
-    val positions: StateFlow<Map<Position, List<ModuleConfig>>> = _positions.asStateFlow()
+class EditorViewModel(
+    private val httpClient: HttpClient
+): ViewModel() {
+    private val _positions: MutableStateFlow<MutableMap<Position, List<HolonetSchema>>> = MutableStateFlow(mutableMapOf())
+    val positions: StateFlow<Map<Position, List<HolonetSchema>>> = _positions.asStateFlow()
 
-    private val _modules: MutableStateFlow<List<ModuleConfig>> = MutableStateFlow(emptyList())
-    val modules: StateFlow<List<ModuleConfig>> = _modules.asStateFlow()
+    private val _modules: MutableStateFlow<List<HolonetSchema>> = MutableStateFlow(emptyList())
+    val modules: StateFlow<List<HolonetSchema>> = _modules.asStateFlow()
 
     private val _currentPosition: MutableStateFlow<Position?> = MutableStateFlow(null)
     val currentPosition: StateFlow<Position?> = _currentPosition.asStateFlow()
@@ -52,7 +58,7 @@ class EditorViewModel: ViewModel() {
         }
     }
 
-    fun updateModule(position: Position, module: ModuleConfig, isAdded: Boolean) {
+    fun updateModule(position: Position, module: HolonetSchema, isAdded: Boolean) {
         viewModelScope.launch {
             val newList = _positions.value[position]?.toMutableList() ?: mutableListOf()
 
@@ -69,12 +75,12 @@ class EditorViewModel: ViewModel() {
         }
     }
 
-    fun addModule(module: ModuleConfig) {
+    fun addModule(module: HolonetSchema) {
         if (currentPosition.value == null) return
         updateModule(currentPosition.value!!, module, true)
     }
 
-    fun removeModule(module: ModuleConfig) {
+    fun removeModule(module: HolonetSchema) {
         if (currentPosition.value == null) return
         updateModule(currentPosition.value!!, module, false)
     }
@@ -83,7 +89,7 @@ class EditorViewModel: ViewModel() {
         _currentPosition.value = position
     }
 
-    fun updateModuleConfig(position: Position, module: ModuleConfig, newConfig: Map<String, JsonElement>) {
+    fun updateModuleConfig(position: Position, module: HolonetSchema, newConfig: Map<String, JsonElement>) {
         viewModelScope.launch {
             val newList = _positions.value[position]?.toMutableList() ?: mutableListOf()
             val index = newList.indexOf(module)
@@ -117,11 +123,8 @@ class EditorViewModel: ViewModel() {
 
     private fun loadModules() {
         viewModelScope.launch {
-            // Simulate config loading
-            val configs = listOf(calendarConfig, clockConfig)
-            _modules.value = configs.map {
-                loadConfig(it)
-            }
+            val response = httpClient.get("/modules")
+            _modules.value = response.body() as List<HolonetSchema>
         }
     }
 }

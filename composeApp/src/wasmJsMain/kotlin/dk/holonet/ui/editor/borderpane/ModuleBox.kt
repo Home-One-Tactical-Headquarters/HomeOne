@@ -18,14 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.GripLinesSolid
-import dk.holonet.config.ModuleConfig
+import dk.holonet.core.HolonetSchema
 import sh.calvin.reorderable.ReorderableCollectionItemScope
 
 @Composable
 internal fun ModuleBox(
     modifier: Modifier,
     scope: ReorderableCollectionItemScope,
-    moduleConfig: ModuleConfig,
+    moduleConfig: HolonetSchema,
     fillMaxWidth: Boolean = true,
     onClick: () -> Unit = { }
 ) {

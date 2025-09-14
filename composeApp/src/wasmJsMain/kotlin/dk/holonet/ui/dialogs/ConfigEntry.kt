@@ -22,7 +22,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import dk.holonet.config.ConfigProperty
+import dk.holonet.core.ConfigField
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
@@ -31,10 +31,10 @@ import kotlinx.serialization.json.encodeToJsonElement
 @Composable
 fun ConfigEntry(
     key: String,
-    config: ConfigProperty,
+    config: ConfigField,
     onValueChange: ((String) -> Unit),
 ) {
-    val name = if (config.required) {
+    val name = if (config.required != null && config.required!!) {
         buildAnnotatedString {
             append(key)
             append(" ")
@@ -85,7 +85,7 @@ fun ConfigEntry(
                 )
             }
 
-            config.values.isNotEmpty() -> {
+            config.values!!.isNotEmpty() -> {
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = it },

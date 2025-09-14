@@ -33,5 +33,5 @@ val diModules = module {
         }
     }}
     viewModel { AppViewModel(get()) }
-    viewModel { EditorViewModel() }
+    viewModel { EditorViewModel(get()) }
 }

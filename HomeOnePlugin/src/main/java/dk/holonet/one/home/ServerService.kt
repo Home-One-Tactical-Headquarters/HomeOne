@@ -15,6 +15,7 @@ import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import kotlinx.coroutines.coroutineScope
@@ -67,6 +68,11 @@ fun Application.module(
             val config: HolonetConfiguration = configurationService.cachedConfig.value ?: HolonetConfiguration()
             call.respond(config)
         }*/
+
+        get("/modules") {
+            val schemas = configurationService.fetchConfigurationSchema()
+            call.respond(HttpStatusCode.OK, schemas)
+        }
 
         post("/update") {
             val newConfig: HolonetConfiguration = call.receive()

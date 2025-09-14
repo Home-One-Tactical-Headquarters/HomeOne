@@ -30,7 +30,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import dk.holonet.config.ModuleConfig
+import dk.holonet.core.HolonetSchema
 import dk.holonet.core.Position
 import dk.holonet.ui.dialogs.ConfigEntry
 import dk.holonet.ui.dialogs.asJsonElement
@@ -46,9 +46,9 @@ internal fun RowComponent(
     viewModel: EditorViewModel,
     modifier: Modifier = Modifier,
     position: Position,
-    state: Map<Position, List<ModuleConfig>>,
+    state: Map<Position, List<HolonetSchema>>,
 ) {
-    val (currentModuleConfig, setCurrentModuleConfig) = remember { mutableStateOf<ModuleConfig?>(null) }
+    val (currentModuleConfig, setCurrentModuleConfig) = remember { mutableStateOf<HolonetSchema?>(null) }
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         viewModel.reorderModules(position, from.index, to.index)
@@ -71,11 +71,11 @@ private fun ContentRow(
     modifier: Modifier,
     viewModel: EditorViewModel,
     lazyListState: LazyListState,
-    state: Map<Position, List<ModuleConfig>>,
+    state: Map<Position, List<HolonetSchema>>,
     position: Position,
     reorderableLazyListState: ReorderableLazyListState,
-    setCurrentModuleConfig: (ModuleConfig?) -> Unit,
-    currentModuleConfig: ModuleConfig?
+    setCurrentModuleConfig: (HolonetSchema?) -> Unit,
+    currentModuleConfig: HolonetSchema?
 ) {
     FloatingActionButtonWrapper(viewModel, currentModuleConfig, setCurrentModuleConfig) {
         Column(
@@ -86,10 +86,6 @@ private fun ContentRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp), state = lazyListState
             ) {
                 state[position]?.let { modules ->
-                    val equalWidthFraction = 1f / modules.size.coerceAtLeast(1)
-                    val minWidthFraction = 0.05f // 5% minimum
-                    val widthFraction = maxOf(equalWidthFraction, minWidthFraction)
-
                     items(modules, key = { it }) { module ->
                         ReorderableItem(reorderableLazyListState, key = module) { isDragging ->
                             val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)

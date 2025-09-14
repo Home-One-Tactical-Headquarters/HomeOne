@@ -14,14 +14,14 @@ import androidx.compose.ui.unit.dp
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.Save
 import compose.icons.lineawesomeicons.TrashSolid
-import dk.holonet.config.ModuleConfig
+import dk.holonet.core.HolonetSchema
 import dk.holonet.ui.editor.EditorViewModel
 
 @Composable
 fun FloatingActionButtonWrapper(
     viewModel: EditorViewModel,
-    currentModuleConfig: ModuleConfig?,
-    setCurrentModuleConfig: (ModuleConfig?) -> Unit,
+    currentModuleConfig: HolonetSchema?,
+    setCurrentModuleConfig: (HolonetSchema?) -> Unit,
     content: @Composable () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
