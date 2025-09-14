@@ -58,7 +58,7 @@ fun ConfigEntry(
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Column(
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(2f),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(text = name)
@@ -93,7 +93,7 @@ fun ConfigEntry(
                 ) {
                     TextField(
                         value = input,
-                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                         onValueChange = {
                             input = it
                             onValueChange(it)
