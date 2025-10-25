@@ -64,10 +64,10 @@ fun Application.module(
             defaultPage = "index.html"
         }
 
-        /*get("/") {
+        get("/configuration") {
             val config: HolonetConfiguration = configurationService.cachedConfig.value ?: HolonetConfiguration()
             call.respond(config)
-        }*/
+        }
 
         get("/modules") {
             val schemas = configurationService.fetchConfigurationSchema()

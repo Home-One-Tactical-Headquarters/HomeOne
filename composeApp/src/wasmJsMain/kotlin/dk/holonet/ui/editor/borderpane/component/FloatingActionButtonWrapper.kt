@@ -20,6 +20,7 @@ import dk.holonet.ui.editor.EditorViewModel
 @Composable
 fun FloatingActionButtonWrapper(
     viewModel: EditorViewModel,
+    updateConfig: () -> Unit,
     currentModuleConfig: HolonetSchema?,
     setCurrentModuleConfig: (HolonetSchema?) -> Unit,
     content: @Composable () -> Unit
@@ -46,7 +47,7 @@ fun FloatingActionButtonWrapper(
 
                     FloatingActionButton(
                         onClick = {
-                            viewModel.saveConfiguration()
+                            updateConfig()
                         }
                     ) {
                         Icon(LineAwesomeIcons.Save, contentDescription = "Save Configuration")

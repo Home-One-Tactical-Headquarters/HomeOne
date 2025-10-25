@@ -2,16 +2,18 @@ package dk.holonet.ui.editor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import dk.holonet.config.loadConfig
+import dk.holonet.config.toHolonetConfiguration
+import dk.holonet.core.HolonetConfiguration
 import dk.holonet.core.HolonetSchema
 import dk.holonet.core.ModuleConfiguration
 import dk.holonet.core.Position
-import dk.holonet.example_config.calendarConfig
-import dk.holonet.example_config.clockConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
-import io.ktor.http.HttpStatusCode
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,8 +23,8 @@ import kotlinx.serialization.json.JsonObject
 
 class EditorViewModel(
     private val httpClient: HttpClient
-): ViewModel() {
-    private val _positions: MutableStateFlow<MutableMap<Position, List<HolonetSchema>>> = MutableStateFlow(mutableMapOf())
+) : ViewModel() {
+    private val _positions: MutableStateFlow<Map<Position, List<HolonetSchema>>> = MutableStateFlow(emptyMap())
     val positions: StateFlow<Map<Position, List<HolonetSchema>>> = _positions.asStateFlow()
 
     private val _modules: MutableStateFlow<List<HolonetSchema>> = MutableStateFlow(emptyList())
@@ -31,58 +33,52 @@ class EditorViewModel(
     private val _currentPosition: MutableStateFlow<Position?> = MutableStateFlow(null)
     val currentPosition: StateFlow<Position?> = _currentPosition.asStateFlow()
 
+    private val modulesMap: MutableMap<String, HolonetSchema> = mutableMapOf()
+
     init {
-        Position.entries.forEach { position ->
-            _positions.value[position] = mutableListOf()
-        }
-
-        loadModules()
-
-        _positions.value.forEach {
-            if (it.value.isEmpty()) {
-                _positions.value[it.key] = _modules.value
-            }
-        }
+        loadConfiguration()
     }
 
     fun reorderModules(position: Position, from: Int, to: Int) {
-        viewModelScope.launch {
-            val newList = _positions.value[position]?.toMutableList() ?: mutableListOf()
-            val module = newList.removeAt(from)
-            module.instance = module.instance?.copy(position = position)
-            newList.add(to, module)
+        val currentPositions = _positions.value
+        val listToReorder = currentPositions[position]?.toMutableList() ?: return
 
-            val newState = _positions.value.toMutableMap()
-            newState[position] = newList
-            _positions.value = newState
+        val moduleToMove = listToReorder.removeAt(from)
+        listToReorder.add(to, moduleToMove)
+
+        // Update priorities for all modules in the affected list
+        val updatedList = listToReorder.mapIndexed { index, module ->
+            module.copy(instance = module.instance?.copy(priority = index))
         }
+
+        _positions.value = currentPositions + (position to updatedList)
     }
 
-    fun updateModule(position: Position, module: HolonetSchema, isAdded: Boolean) {
-        viewModelScope.launch {
-            val newList = _positions.value[position]?.toMutableList() ?: mutableListOf()
-
-            if (!isAdded && newList.contains(module)) {
-                newList.remove(module)
-            } else if (isAdded && !newList.contains(module)) {
-                module.instance = ModuleConfiguration(position, newList.size)
-                newList.add(module)
-            }
-
-            val newState = _positions.value.toMutableMap()
-            newState[position] = newList
-            _positions.value = newState
+    private fun updateModule(position: Position, module: HolonetSchema, isAdded: Boolean) {
+        val currentPositions = _positions.value
+        val currentList = currentPositions[position] ?: emptyList()
+        val newList = if (isAdded) {
+            // Add module with new instance and priority
+            val newModule = module.copy(instance = ModuleConfiguration(position, currentList.size))
+            currentList + newModule
+        } else {
+            // Remove module
+            currentList - module
         }
+
+        _positions.value = currentPositions + (position to newList)
     }
 
     fun addModule(module: HolonetSchema) {
-        if (currentPosition.value == null) return
-        updateModule(currentPosition.value!!, module, true)
+        currentPosition.value?.let {
+            updateModule(it, module, true)
+        }
     }
 
     fun removeModule(module: HolonetSchema) {
-        if (currentPosition.value == null) return
-        updateModule(currentPosition.value!!, module, false)
+        currentPosition.value?.let {
+            updateModule(it, module, false)
+        }
     }
 
     fun setCurrentPosition(position: Position?) {
@@ -90,41 +86,71 @@ class EditorViewModel(
     }
 
     fun updateModuleConfig(position: Position, module: HolonetSchema, newConfig: Map<String, JsonElement>) {
-        viewModelScope.launch {
-            val newList = _positions.value[position]?.toMutableList() ?: mutableListOf()
-            val index = newList.indexOf(module)
-            if (index != -1) {
-                val oldModule = newList[index]
+        val currentPositions = _positions.value
+        val listToUpdate = currentPositions[position] ?: return
+        val moduleIndex = listToUpdate.indexOf(module)
+        if (moduleIndex == -1) return
 
-                if (oldModule.instance == null) {
-                    oldModule.instance = ModuleConfiguration(position, index)
-                }
+        val oldModule = listToUpdate[moduleIndex]
+        val updatedModule = oldModule.copy(
+            instance = (oldModule.instance ?: ModuleConfiguration(position, moduleIndex)).copy(
+                config = JsonObject(newConfig)
+            )
+        )
 
-                val updatedModule = oldModule.copy(instance = oldModule.instance?.copy(config = JsonObject(newConfig)))
-                newList[index] = updatedModule
-                val newState = _positions.value.toMutableMap()
-                newState[position] = newList
-                _positions.value = newState
-            }
+        val newList = listToUpdate.toMutableList().apply {
+            this[moduleIndex] = updatedModule
         }
+
+        _positions.value = currentPositions + (position to newList)
+        saveConfiguration(_positions.value.toHolonetConfiguration())
     }
 
     fun saveConfiguration() {
+        // TODO: Why is positions value different?
+        println("positions.value2: ${positions.value}")
+        val holonetConfiguration = positions.value.toHolonetConfiguration()
+        println("Saving configuration: $holonetConfiguration")
+        saveConfiguration(holonetConfiguration)
+    }
+
+    private fun saveConfiguration(configuration: HolonetConfiguration) {
         viewModelScope.launch {
-            println("Module configurations: ")
-            _positions.value.forEach { (position, modules) ->
-                println("Position: $position")
-                modules.forEach { module ->
-                    println("Module: ${module.name}, Config: ${module.instance?.config}")
-                }
+            httpClient.post("/update") {
+                contentType(ContentType.Application.Json)
+                setBody(configuration)
             }
         }
     }
 
-    private fun loadModules() {
+    private fun loadConfiguration() {
         viewModelScope.launch {
-            val response = httpClient.get("/modules")
-            _modules.value = response.body() as List<HolonetSchema>
+            if (_modules.value.isEmpty()) {
+                loadModules()
+            }
+
+            val holonetConfig = httpClient.get("/configuration").body<HolonetConfiguration>()
+            val availableSchemas = modulesMap
+
+            val newPositions = Position.entries.associateWith { mutableListOf<HolonetSchema>() }.toMutableMap()
+
+            holonetConfig.modules.forEach { (name, config) ->
+                availableSchemas[name]?.let { schema ->
+                    val moduleWithInstance = schema.copy(instance = config)
+                    newPositions[config.position]?.add(moduleWithInstance)
+                } ?: println("No schema found for module name: $name")
+            }
+
+            _positions.value = newPositions.mapValues { (_, modules) ->
+                modules.sortBy { it.instance?.priority ?: Int.MAX_VALUE }
+                modules.toList() // Convert to immutable List
+            }
         }
+    }
+
+    private suspend fun loadModules() {
+        val response = httpClient.get("/modules")
+        modulesMap.putAll(response.body() as Map<String, HolonetSchema>)
+        _modules.value = modulesMap.values.toList()
     }
 }

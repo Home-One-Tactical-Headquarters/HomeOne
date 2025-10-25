@@ -23,6 +23,9 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import dk.holonet.core.ConfigField
+import dk.holonet.core.asBoolean
+import dk.holonet.core.asInt
+import dk.holonet.core.asString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.encodeToJsonElement
@@ -32,6 +35,7 @@ import kotlinx.serialization.json.encodeToJsonElement
 fun ConfigEntry(
     key: String,
     config: ConfigField,
+    value: JsonElement?,
     onValueChange: ((String) -> Unit),
 ) {
     val name = if (config.required != null && config.required!!) {
@@ -46,8 +50,19 @@ fun ConfigEntry(
         buildAnnotatedString { append(key) }
     }
 
+    // If there is a value from the existing config, use that as starting point
+    // Otherwise use the default from the schema
+    val startingValue = if (value == null) {
+        config.default ?: ""
+    } else when (config.type) {
+        "string" -> value.asString()
+        "boolean" -> value.asBoolean()
+        "number" -> value.asInt()
+        else -> value.toString()
+    }
+
     // General Text field
-    var input by remember { mutableStateOf(config.default ?: "") }
+    var input by remember { mutableStateOf(startingValue.toString()) }
 
     // Only for exposed dropdown selection
     val options: List<String> = config.values?.map { it } ?: emptyList()

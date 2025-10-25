@@ -68,7 +68,19 @@ private fun ContentColumn(
     setCurrentModuleConfig: (HolonetSchema?) -> Unit,
     currentModuleConfig: HolonetSchema?
 ) {
-    FloatingActionButtonWrapper(viewModel, currentModuleConfig, setCurrentModuleConfig) {
+    val configMap = remember { mutableMapOf<String, JsonElement>() }
+
+    FloatingActionButtonWrapper(
+        viewModel = viewModel,
+        updateConfig = {
+            currentModuleConfig?.let { module ->
+                println("Updating config for module: ${module.name} at position: $position with config: $configMap")
+                viewModel.updateModuleConfig(position, module, configMap)
+            }
+        },
+        currentModuleConfig = currentModuleConfig,
+        setCurrentModuleConfig = setCurrentModuleConfig
+    ) {
         Row(
             modifier = modifier
                 .fillMaxSize()
@@ -113,21 +125,21 @@ private fun ContentColumn(
                 }
 
                 else -> {
+                    currentModuleConfig.config.forEach { (k, v) ->
+                        configMap[k] = currentModuleConfig.instance?.config?.get(k)
+                            ?: v.default?.asJsonElement()
+                                    ?: "".asJsonElement()
+                    }
+
                     LazyColumn(
                         modifier = editorModifier,
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(currentModuleConfig.config.entries.toList(), key = { it.key }) { (key, value) ->
-                            val configMap = mutableMapOf<String, JsonElement>()
-
-                            currentModuleConfig.config.forEach { (k, v) ->
-                                configMap[k] = currentModuleConfig.instance?.config?.get(k)
-                                    ?: v.default?.asJsonElement()
-                                            ?: "".asJsonElement()
-                            }
+                        items(currentModuleConfig.config.entries.toList(), key = { it.key }) { (key, configField) ->
                             ConfigEntry(
                                 key,
-                                value,
+                                configField,
+                                configMap[key],
                                 onValueChange = { newValue ->
                                     configMap[key] = newValue.asJsonElement()
                                 }

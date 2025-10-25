@@ -22,21 +22,17 @@ class AppViewModel(
 
     fun fetch() {
         viewModelScope.launch {
-            println("Fetching data...")
             val response = httpClient.get("/")
-            println("Response: $response")
             _state.emit(UiState.Success(response.bodyAsText()))
         }
     }
 
     fun update() {
         viewModelScope.launch {
-            println("Updating data...")
             val response = httpClient.post("/update") {
                 contentType(ContentType.Application.Json)
                 setBody(testJson)
             }
-            println("Response: $response")
             if (response.status.value == 200) {
                 _state.emit(UiState.Success(response.bodyAsText()))
             } else {
