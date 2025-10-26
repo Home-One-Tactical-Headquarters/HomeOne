@@ -69,30 +69,6 @@ fun App(
                 paddingValues = paddingValues,
                 onNavHostReady = onNavHostReady
             )
-
-            /*Column(Modifier.padding(paddingValues).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Row {
-                    Button(onClick = { viewModel.fetch() }) {
-                        Text("Fetch configuration!")
-                    }
-
-                    Button(onClick = { viewModel.update() }) {
-                        Text("Update configuration!")
-                    }
-                }
-
-                when (uiState) {
-                    is AppViewModel.UiState.Loading -> {
-                        Text("Loading...")
-                    }
-                    is AppViewModel.UiState.Error -> {
-                        Text("Error: ${(uiState as AppViewModel.UiState.Error).message}")
-                    }
-                    is AppViewModel.UiState.Success -> {
-                        Text("Success: ${(uiState as AppViewModel.UiState.Success).data}")
-                    }
-                }
-            }*/
         }
     }
 }

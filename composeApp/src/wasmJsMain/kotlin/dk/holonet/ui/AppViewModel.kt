@@ -27,21 +27,6 @@ class AppViewModel(
         }
     }
 
-    fun update() {
-        viewModelScope.launch {
-            val response = httpClient.post("/update") {
-                contentType(ContentType.Application.Json)
-                setBody(testJson)
-            }
-            if (response.status.value == 200) {
-                _state.emit(UiState.Success(response.bodyAsText()))
-            } else {
-                _state.emit(UiState.Error("Failed to update configuration"))
-            }
-        }
-    }
-
-
     sealed class UiState {
         data object Loading : UiState()
         data class Success(val data: String) : UiState()

@@ -84,8 +84,7 @@ fun BorderPaneScreen(
                 val state by viewModel.positions.collectAsStateWithLifecycle()
                 RowComponent(
                     viewModel = viewModel,
-                    position = position,
-                    state = state
+                    position = position
                 )
             }
         }

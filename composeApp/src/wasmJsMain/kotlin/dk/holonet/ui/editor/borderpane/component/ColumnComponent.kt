@@ -16,9 +16,11 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -31,6 +33,8 @@ import dk.holonet.ui.dialogs.ConfigEntry
 import dk.holonet.ui.dialogs.asJsonElement
 import dk.holonet.ui.editor.EditorViewModel
 import dk.holonet.ui.editor.borderpane.ModuleBox
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
 import kotlinx.serialization.json.JsonElement
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.ReorderableLazyListState
@@ -46,6 +50,15 @@ internal fun ColumnComponent(
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
         viewModel.reorderModules(position, from.index, to.index)
+    }
+
+    LaunchedEffect(reorderableLazyListState) {
+        snapshotFlow { reorderableLazyListState.isAnyItemDragging }
+            .drop(1) // Ignore the initial value which is false
+            .filter { !it } // Filter for when drag is finished
+            .collect {
+                viewModel.onDragEnd()
+            }
     }
 
     Column(

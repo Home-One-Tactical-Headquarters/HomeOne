@@ -41,18 +41,21 @@ class EditorViewModel(
     }
 
     fun reorderModules(position: Position, from: Int, to: Int) {
-        val currentPositions = _positions.value
-        val listToReorder = currentPositions[position]?.toMutableList() ?: return
+        _positions.update { currentPositions ->
+            val listToReorder = currentPositions[position]?.toMutableList() ?: return@update currentPositions
 
-        val moduleToMove = listToReorder.removeAt(from)
-        listToReorder.add(to, moduleToMove)
+            val moduleToMove = listToReorder.removeAt(from)
+            listToReorder.add(to, moduleToMove)
 
-        // Update priorities for all modules in the affected list
-        val updatedList = listToReorder.mapIndexed { index, module ->
-            module.copy(instance = module.instance?.copy(priority = index))
+            val updatedList = listToReorder.mapIndexed { index, module ->
+                module.copy(instance = module.instance?.copy(priority = index))
+            }
+            currentPositions + (position to updatedList)
         }
+    }
 
-        _positions.update { currentPositions + (position to updatedList) }
+    fun onDragEnd() {
+        saveConfiguration()
     }
 
     private fun updateModule(position: Position, module: HolonetSchema, isAdded: Boolean) {
@@ -63,8 +66,10 @@ class EditorViewModel(
             val newModule = module.copy(instance = ModuleConfiguration(position, currentList.size))
             currentList + newModule
         } else {
-            // Remove module
-            currentList - module
+            // Remove module and update priorities of subsequent modules
+            (currentList - module).mapIndexed { index, m ->
+                m.copy(instance = m.instance?.copy(priority = index))
+            }
         }
 
         _positions.update { currentPositions + (position to newList) }
@@ -104,22 +109,15 @@ class EditorViewModel(
         }
 
         _positions.update { currentPositions + (position to newList) }
-        saveConfiguration(_positions.value.toHolonetConfiguration())
+        saveConfiguration()
     }
 
     fun saveConfiguration() {
-        // TODO: Why is positions value different?
-        println("positions.value2: ${positions.value}")
-        val holonetConfiguration = positions.value.toHolonetConfiguration()
-        println("Saving configuration: $holonetConfiguration")
-        saveConfiguration(holonetConfiguration)
-    }
-
-    private fun saveConfiguration(configuration: HolonetConfiguration) {
+        val holonetConfiguration = _positions.value.toHolonetConfiguration()
         viewModelScope.launch {
             httpClient.post("/update") {
                 contentType(ContentType.Application.Json)
-                setBody(configuration)
+                setBody(holonetConfiguration)
             }
         }
     }
