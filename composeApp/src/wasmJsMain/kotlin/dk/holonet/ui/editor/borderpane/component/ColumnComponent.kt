@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dk.holonet.core.HolonetSchema
 import dk.holonet.core.Position
 import dk.holonet.ui.dialogs.ConfigEntry
@@ -39,8 +40,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 internal fun ColumnComponent(
     modifier: Modifier = Modifier,
     viewModel: EditorViewModel,
-    position: Position,
-    state: Map<Position, List<HolonetSchema>>
+    position: Position
 ) {
     val (currentModuleConfig, setCurrentModuleConfig) = remember { mutableStateOf<HolonetSchema?>(null) }
     val lazyListState = rememberLazyListState()
@@ -53,7 +53,7 @@ internal fun ColumnComponent(
             .fillMaxSize()
     ) {
         Header(position)
-        ContentColumn(modifier, viewModel, lazyListState, state, position, reorderableLazyListState, setCurrentModuleConfig, currentModuleConfig)
+        ContentColumn(modifier, viewModel, lazyListState, position, reorderableLazyListState, setCurrentModuleConfig, currentModuleConfig)
     }
 }
 
@@ -62,13 +62,13 @@ private fun ContentColumn(
     modifier: Modifier,
     viewModel: EditorViewModel,
     lazyListState: LazyListState,
-    state: Map<Position, List<HolonetSchema>>,
     position: Position,
     reorderableLazyListState: ReorderableLazyListState,
     setCurrentModuleConfig: (HolonetSchema?) -> Unit,
     currentModuleConfig: HolonetSchema?
 ) {
-    val configMap = remember { mutableMapOf<String, JsonElement>() }
+    val state by viewModel.positions.collectAsStateWithLifecycle()
+    val configMap = remember(currentModuleConfig) { mutableMapOf<String, JsonElement>() }
 
     FloatingActionButtonWrapper(
         viewModel = viewModel,
@@ -151,6 +151,3 @@ private fun ContentColumn(
         }
     }
 }
-
-
-

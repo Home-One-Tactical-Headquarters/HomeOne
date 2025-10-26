@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -33,7 +34,6 @@ fun BorderPaneScreen(
     onNavHostReady: suspend (NavController) -> Unit = {}
 ) {
     val navController = rememberNavController()
-    val state by viewModel.positions.collectAsState()
 
     NavHost(
         navController,
@@ -78,15 +78,14 @@ fun BorderPaneScreen(
             if (position.isVertical()) {
                 ColumnComponent(
                     viewModel = viewModel,
-                    position = position,
-                    state = state
+                    position = position
                 )
             } else {
+                val state by viewModel.positions.collectAsStateWithLifecycle()
                 RowComponent(
-                    viewModel,
-                    modifier = Modifier,
-                    position,
-                    state
+                    viewModel = viewModel,
+                    position = position,
+                    state = state
                 )
             }
         }

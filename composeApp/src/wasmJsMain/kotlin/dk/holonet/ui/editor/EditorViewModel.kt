@@ -17,6 +17,7 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -51,7 +52,7 @@ class EditorViewModel(
             module.copy(instance = module.instance?.copy(priority = index))
         }
 
-        _positions.value = currentPositions + (position to updatedList)
+        _positions.update { currentPositions + (position to updatedList) }
     }
 
     private fun updateModule(position: Position, module: HolonetSchema, isAdded: Boolean) {
@@ -66,7 +67,7 @@ class EditorViewModel(
             currentList - module
         }
 
-        _positions.value = currentPositions + (position to newList)
+        _positions.update { currentPositions + (position to newList) }
     }
 
     fun addModule(module: HolonetSchema) {
@@ -102,7 +103,7 @@ class EditorViewModel(
             this[moduleIndex] = updatedModule
         }
 
-        _positions.value = currentPositions + (position to newList)
+        _positions.update { currentPositions + (position to newList) }
         saveConfiguration(_positions.value.toHolonetConfiguration())
     }
 
