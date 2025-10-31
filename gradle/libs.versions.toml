@@ -10,6 +10,7 @@ koin-bom = "4.1.1"
 reorderable = "2.4.3"
 composeIcons = "1.1.1"
 navigation = "2.9.0-beta05"
+filekit = "0.10.0"
 
 [libraries]
 # AndroidX
@@ -47,6 +48,10 @@ reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reo
 
 # Compose Icons
 composeIcons-lineAwesome = { module = "br.com.devsrsouza.compose.icons:line-awesome", version.ref = "composeIcons" }
+
+# FileKit
+filekit-core = { module = "io.github.vinceglb:filekit-core", version.ref = "filekit" }
+filekit-dialogs-compose = { module = "io.github.vinceglb:filekit-dialogs-compose", version.ref = "filekit" }
 
 # Holonet
 holonet-core = { group = "dk.holonet", name = "core", version = "0.0.2" }

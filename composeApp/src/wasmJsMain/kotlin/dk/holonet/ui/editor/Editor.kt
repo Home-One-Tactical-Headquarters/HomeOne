@@ -13,12 +13,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import dk.holonet.ui.editor.borderpane.BorderPaneScreen
+import dk.holonet.ui.editor.borderpane.BorderPaneViewModel
 import dk.holonet.ui.editor.modulelist.ModulesList
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun EditorView(
-    viewModel: EditorViewModel = koinViewModel(),
     paddingValues: PaddingValues,
     onNavHostReady: suspend (NavController) -> Unit = {}
 ) {
@@ -33,8 +33,7 @@ fun EditorView(
         // Right: Position of applied modules
         Row {
             ModulesList(
-                modifier = Modifier.fillMaxHeight().weight(1f),
-                viewModel = viewModel
+                modifier = Modifier.fillMaxHeight().weight(1f)
             )
 
             BorderPaneScreen(
@@ -42,7 +41,6 @@ fun EditorView(
                     .fillMaxHeight()
                     .weight(4f)
                     .background(MaterialTheme.colorScheme.surfaceContainer),
-                viewModel = viewModel,
                 onNavHostReady = onNavHostReady
             )
         }

@@ -78,6 +78,9 @@ kotlin {
             // Compose Icons
             implementation(libs.composeIcons.lineAwesome)
 
+            // FileKit
+            implementation(libs.filekit.dialogs.compose)
+
             // Holonet Core
             implementation(libs.holonet.core)
         }

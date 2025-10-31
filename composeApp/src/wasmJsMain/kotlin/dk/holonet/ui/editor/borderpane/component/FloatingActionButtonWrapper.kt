@@ -15,11 +15,11 @@ import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.Save
 import compose.icons.lineawesomeicons.TrashSolid
 import dk.holonet.core.HolonetSchema
-import dk.holonet.ui.editor.EditorViewModel
+import dk.holonet.ui.editor.borderpane.BorderPaneViewModel
 
 @Composable
 fun FloatingActionButtonWrapper(
-    viewModel: EditorViewModel,
+    viewModel: BorderPaneViewModel,
     updateConfig: () -> Unit,
     currentModuleConfig: HolonetSchema?,
     setCurrentModuleConfig: (HolonetSchema?) -> Unit,

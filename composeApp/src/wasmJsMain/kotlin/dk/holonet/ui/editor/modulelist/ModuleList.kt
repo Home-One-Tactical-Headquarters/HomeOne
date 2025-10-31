@@ -29,15 +29,26 @@ import androidx.compose.ui.unit.dp
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.PlusSolid
 import compose.icons.lineawesomeicons.Save
-import dk.holonet.ui.editor.EditorViewModel
+import io.github.vinceglb.filekit.dialogs.FileKitMode
+import io.github.vinceglb.filekit.dialogs.FileKitType
+import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 internal fun ModulesList(
     modifier: Modifier,
-    viewModel: EditorViewModel
+    viewModel: ModuleListViewModel = koinViewModel(),
 ) {
     val state by viewModel.modules.collectAsState()
     val currentPosition by viewModel.currentPosition.collectAsState()
+
+    val fileLauncher = rememberFilePickerLauncher(
+        mode =FileKitMode.Multiple(),
+        type = FileKitType.File(extensions = listOf("zip", "rar"))
+    ) { files ->
+        println("Selected files: $files")
+        viewModel.uploadModules(files)
+    }
 
     Column(
         modifier = modifier
@@ -70,7 +81,7 @@ internal fun ModulesList(
 
         Row {
             TextButton(
-                onClick = {},
+                onClick = { fileLauncher.launch() },
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RectangleShape
             ) {
@@ -96,7 +107,7 @@ internal fun ModulesList(
 
             TextButton(
                 onClick = {
-                    viewModel.saveConfiguration()
+//                    viewModel.saveConfiguration()
                 },
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RectangleShape
@@ -121,7 +132,5 @@ internal fun ModulesList(
                 }
             }
         }
-
-
     }
 }

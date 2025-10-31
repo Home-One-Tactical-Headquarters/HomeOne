@@ -25,6 +25,9 @@ dependencies {
     implementation(ktorLibs.server.contentNegotiation)
     implementation(ktorLibs.server.cors)
     compileOnly(ktorLibs.serialization.kotlinx.json)
+
+    // FileKit
+    implementation(libs.filekit.core)
 }
 
 java {

@@ -1,7 +1,9 @@
 package dk.holonet.di
 
+import dk.holonet.data.ModulesRepository
 import dk.holonet.ui.AppViewModel
-import dk.holonet.ui.editor.EditorViewModel
+import dk.holonet.ui.editor.borderpane.BorderPaneViewModel
+import dk.holonet.ui.editor.modulelist.ModuleListViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
@@ -32,6 +34,8 @@ val diModules = module {
             }
         }
     }}
+    single { ModulesRepository(get()) }
     viewModel { AppViewModel(get()) }
-    viewModel { EditorViewModel(get()) }
+    viewModel { BorderPaneViewModel(get()) }
+    viewModel { ModuleListViewModel(get()) }
 }

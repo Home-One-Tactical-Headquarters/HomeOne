@@ -35,7 +35,7 @@ import dk.holonet.core.HolonetSchema
 import dk.holonet.core.Position
 import dk.holonet.ui.dialogs.ConfigEntry
 import dk.holonet.ui.dialogs.asJsonElement
-import dk.holonet.ui.editor.EditorViewModel
+import dk.holonet.ui.editor.borderpane.BorderPaneViewModel
 import dk.holonet.ui.editor.borderpane.ModuleBox
 import kotlinx.serialization.json.JsonElement
 import sh.calvin.reorderable.ReorderableItem
@@ -45,7 +45,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 internal fun RowComponent(
     modifier: Modifier = Modifier,
-    viewModel: EditorViewModel,
+    viewModel: BorderPaneViewModel,
     position: Position
 ) {
     val (currentModuleConfig, setCurrentModuleConfig) = remember { mutableStateOf<HolonetSchema?>(null) }
@@ -69,7 +69,7 @@ internal fun RowComponent(
 @Composable
 private fun ContentRow(
     modifier: Modifier,
-    viewModel: EditorViewModel,
+    viewModel: BorderPaneViewModel,
     lazyListState: LazyListState,
     position: Position,
     reorderableLazyListState: ReorderableLazyListState,

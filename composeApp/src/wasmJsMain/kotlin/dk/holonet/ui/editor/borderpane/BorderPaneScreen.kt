@@ -8,7 +8,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,17 +19,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.savedstate.read
 import dk.holonet.core.Position
-import dk.holonet.ui.editor.EditorViewModel
 import dk.holonet.ui.editor.borderpane.component.ColumnComponent
 import dk.holonet.ui.editor.borderpane.component.RowComponent
 import dk.holonet.ui.fromNavigatorString
 import dk.holonet.ui.isVertical
 import dk.holonet.ui.toNavigatorString
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun BorderPaneScreen(
     modifier: Modifier,
-    viewModel: EditorViewModel,
+    viewModel: BorderPaneViewModel = koinViewModel(),
     onNavHostReady: suspend (NavController) -> Unit = {}
 ) {
     val navController = rememberNavController()
