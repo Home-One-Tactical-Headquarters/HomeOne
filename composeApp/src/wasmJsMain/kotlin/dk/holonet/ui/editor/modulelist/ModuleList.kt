@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import compose.icons.lineawesomeicons.Save
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
+import io.github.vinceglb.filekit.name
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -41,9 +43,31 @@ internal fun ModulesList(
 ) {
     val state by viewModel.modules.collectAsState()
     val currentPosition by viewModel.currentPosition.collectAsState()
+    val overwriteConfirmation by viewModel.overwriteConfirmation.collectAsState()
+
+    overwriteConfirmation?.let { files ->
+        AlertDialog(
+            onDismissRequest = { viewModel.cancelUpload() },
+            title = { Text("Overwrite Modules?") },
+            text = {
+                val fileNames = files.joinToString(separator = "\n") { "• ${it.name}" }
+                Text("The following modules already exist. Do you want to overwrite them?\n\n$fileNames")
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.confirmUpload() }) {
+                    Text("Overwrite")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.cancelUpload() }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     val fileLauncher = rememberFilePickerLauncher(
-        mode =FileKitMode.Multiple(),
+        mode = FileKitMode.Multiple(),
         type = FileKitType.File(extensions = listOf("zip", "rar"))
     ) { files ->
         println("Selected files: $files")

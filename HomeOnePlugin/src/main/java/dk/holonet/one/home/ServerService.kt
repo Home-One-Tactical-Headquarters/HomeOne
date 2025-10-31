@@ -82,6 +82,11 @@ fun Application.module(
             call.respond(HttpStatusCode.OK, schemas)
         }
 
+        get("/modules/names") {
+            val names = configurationService.getModuleNames()
+            call.respond(HttpStatusCode.OK, names)
+        }
+
         post("/modules") {
             val modules = call.receiveMultipart()
             val files = mutableListOf<PlatformFile>()

@@ -150,6 +150,10 @@ class ModulesRepository(private val httpClient: HttpClient) {
         }
     }
 
+    suspend fun getModuleNames(): List<String> {
+        return httpClient.get("/modules/names").body<List<String>>()
+    }
+
     private fun loadConfiguration() {
         repositoryScope.launch {
             /*if (_modules.value.isEmpty()) {
