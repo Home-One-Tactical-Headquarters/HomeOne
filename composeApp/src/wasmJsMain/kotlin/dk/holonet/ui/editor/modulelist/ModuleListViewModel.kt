@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 class ModuleListViewModel(
     private val repository: ModulesRepository
 ) : ViewModel() {
+
     val modules: StateFlow<List<HolonetSchema>> = repository.modules
     val currentPosition: StateFlow<Position?> = repository.currentPosition
 
@@ -22,8 +23,8 @@ class ModuleListViewModel(
     val overwriteConfirmation: StateFlow<List<PlatformFile>?> = _overwriteConfirmation.asStateFlow()
 
     fun addModule(module: HolonetSchema) {
-        repository.currentPosition.value?.let {
-            repository.updateModule(it, module, true)
+        currentPosition.value?.let { position ->
+            repository.updateModule(position, module, isAdded = true)
         }
     }
 
@@ -34,38 +35,44 @@ class ModuleListViewModel(
     }
 
     fun uploadModules(modules: List<PlatformFile>?) {
+        if (modules.isNullOrEmpty()) {
+            println("No modules to upload")
+            return
+        }
+
         viewModelScope.launch {
-            if (modules.isNullOrEmpty()) {
-                println("No modules to upload")
+            val response = repository.uploadModules(modules) ?: run {
+                // TODO: Handle upload error
                 return@launch
             }
 
-            val response = repository.uploadModules(modules)
-
-            if (response == null) {
-                // Handle error
-            } else {
-                if (response.isEmpty()) {
-                    // Successful upload
-                    return@launch
-                }
-
-                // Handle existing modules
-                _overwriteConfirmation.value = modules.filter { it.name in response }
+            if (response.isNotEmpty()) {
+                handleExistingModules(modules, response)
             }
         }
     }
 
     fun confirmUpload() {
         viewModelScope.launch {
-            if (_overwriteConfirmation.value?.isEmpty() == false) {
-                repository.uploadModules(_overwriteConfirmation.value!!, true)
+            _overwriteConfirmation.value?.takeIf { it.isNotEmpty() }?.let { modules ->
+                repository.uploadModules(modules, overwrite = true)
             }
-            _overwriteConfirmation.value = null
+            clearOverwriteConfirmation()
         }
     }
 
     fun cancelUpload() {
+        clearOverwriteConfirmation()
+    }
+
+    private fun handleExistingModules(
+        modules: List<PlatformFile>,
+        existingModuleNames: List<String>
+    ) {
+        _overwriteConfirmation.value = modules.filter { it.name in existingModuleNames }
+    }
+
+    private fun clearOverwriteConfirmation() {
         _overwriteConfirmation.value = null
     }
 }
