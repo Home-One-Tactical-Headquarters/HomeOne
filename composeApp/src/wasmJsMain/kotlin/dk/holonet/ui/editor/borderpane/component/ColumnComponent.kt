@@ -87,7 +87,6 @@ private fun ContentColumn(
         viewModel = viewModel,
         updateConfig = {
             currentModuleConfig?.let { module ->
-                println("Updating config for module: ${module.name} at position: $position with config: $configMap")
                 viewModel.updateModuleConfig(position, module, configMap)
             }
         },

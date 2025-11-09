@@ -29,14 +29,12 @@ class HomeOnePlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper), KoinCompon
 
         pluginScope.launch {
             val extractedDir = extractHomeOneFromJar("${wrapper.pluginPath}")
-            println("HomeOnePlugin started server on port 8081\nUsing files from ${extractedDir.absolutePath}")
             serverService.start(path = extractedDir.absolutePath)
         }
     }
 
     override fun stop() {
         super.stop()
-        println("HomeOnePlugin stopping server")
         serverService.stop()
         pluginScope.cancel()
         extractedHomeOneDir?.deleteRecursively()

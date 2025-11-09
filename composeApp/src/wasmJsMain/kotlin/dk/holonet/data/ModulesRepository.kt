@@ -150,8 +150,6 @@ class ModulesRepository(private val httpClient: HttpClient) {
         if (!response.status.isSuccess()) return null
         val errors = response.body<List<String>>()
 
-        println("Errors: $errors")
-
         loadModules()
         delay(1000) // Small delay to ensure server processes the new modules
         loadConfiguration()

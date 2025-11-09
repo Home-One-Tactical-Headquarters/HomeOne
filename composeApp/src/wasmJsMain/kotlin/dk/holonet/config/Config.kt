@@ -23,7 +23,6 @@ fun Map<Position, List<HolonetSchema>>.toHolonetConfiguration(): HolonetConfigur
     this.forEach { (position, schemas) ->
         schemas.forEachIndexed { index, schema ->
             val config = schema.instance?.config ?: JsonObject(emptyMap())
-            println("Adding module configuration for module: ${schema.name} at position: $position with priority: $index and config: $config")
             moduleConfigurations[schema.name.lowercase()] = ModuleConfiguration(
                 position = position,
                 priority = index,
