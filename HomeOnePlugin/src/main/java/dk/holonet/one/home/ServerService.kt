@@ -3,29 +3,20 @@ package dk.holonet.one.home
 import dk.holonet.core.HolonetConfiguration
 import dk.holonet.core.services.ConfigurationService
 import io.github.vinceglb.filekit.PlatformFile
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.PartData
-import io.ktor.http.content.forEachPart
-import io.ktor.serialization.kotlinx.json.json
-import io.ktor.server.application.Application
-import io.ktor.server.application.ApplicationCall
-import io.ktor.server.application.install
-import io.ktor.server.engine.EmbeddedServer
-import io.ktor.server.engine.embeddedServer
-import io.ktor.server.http.content.singlePageApplication
-import io.ktor.server.netty.Netty
-import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.server.plugins.cors.routing.CORS
-import io.ktor.server.request.receive
-import io.ktor.server.request.receiveMultipart
-import io.ktor.server.response.respond
-import io.ktor.server.routing.delete
-import io.ktor.server.routing.get
-import io.ktor.server.routing.post
-import io.ktor.server.routing.routing
-import io.ktor.util.cio.writeChannel
-import io.ktor.utils.io.copyAndClose
+import io.ktor.http.*
+import io.ktor.http.content.*
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.application.*
+import io.ktor.server.engine.*
+import io.ktor.server.http.content.*
+import io.ktor.server.netty.*
+import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.request.*
+import io.ktor.server.response.*
+import io.ktor.server.routing.*
+import io.ktor.util.cio.*
+import io.ktor.utils.io.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -35,15 +26,21 @@ class ServerService(
 ) {
     private lateinit var server: EmbeddedServer<*, *>
 
-    suspend fun start(path: String) {
-        coroutineScope {
-            server = embeddedServer(Netty, port = 8081, module = { module(configurationService, path) })
-            server.start(wait = true)
+    suspend fun start(path: String) = coroutineScope {
+        server = embeddedServer(Netty, port = SERVER_PORT) {
+            module(configurationService, path)
         }
+        server.start(wait = true)
     }
 
     fun stop() {
-        server.stop(1000, 1000)
+        server.stop(STOP_GRACE_PERIOD_MS, STOP_TIMEOUT_MS)
+    }
+
+    private companion object {
+        const val SERVER_PORT = 8081
+        const val STOP_GRACE_PERIOD_MS = 1000L
+        const val STOP_TIMEOUT_MS = 1000L
     }
 }
 
@@ -51,6 +48,12 @@ fun Application.module(
     configurationService: ConfigurationService,
     path: String
 ) {
+    configureContentNegotiation()
+    configureCors()
+    configureRouting(configurationService, path)
+}
+
+private fun Application.configureContentNegotiation() {
     install(ContentNegotiation) {
         json(Json {
             prettyPrint = true
@@ -58,55 +61,75 @@ fun Application.module(
             ignoreUnknownKeys = true
         })
     }
+}
 
+private fun Application.configureCors() {
     install(CORS) {
         anyHost() // TODO: Replace with specific host
         allowCredentials = true
         allowHeaders { true }
         allowHeader(HttpHeaders.ContentType)
     }
+}
 
+private fun Application.configureRouting(
+    configurationService: ConfigurationService,
+    path: String
+) {
     routing {
-        singlePageApplication {
-            useResources = false
-            filesPath = path
-            defaultPage = "index.html"
-        }
+        configureSinglePageApplication(path)
+        configurationRoutes(configurationService)
+        moduleRoutes(configurationService)
+    }
+}
 
-        get("/configuration") {
-            val config: HolonetConfiguration = configurationService.cachedConfig.value ?: HolonetConfiguration()
+private fun Route.configureSinglePageApplication(path: String) {
+    singlePageApplication {
+        useResources = false
+        filesPath = path
+        defaultPage = "index.html"
+    }
+}
+
+private fun Route.configurationRoutes(configurationService: ConfigurationService) {
+    route("/configuration") {
+        get {
+            val config = configurationService.cachedConfig.value ?: HolonetConfiguration()
             call.respond(config)
         }
 
-        get("/modules") {
+        post {
+            val newConfig = call.receive<HolonetConfiguration>()
+            configurationService.updateConfiguration(newConfig)
+            call.respond(HttpStatusCode.OK)
+        }
+    }
+}
+
+private fun Route.moduleRoutes(configurationService: ConfigurationService) {
+    route("/modules") {
+        get {
             val schemas = configurationService.fetchConfigurationSchema()
-            call.respond(HttpStatusCode.OK, schemas)
+            call.respond(schemas)
         }
 
-        delete("/modules") {
+        delete {
             val pluginIds = call.receive<List<String>>()
             configurationService.deleteModules(pluginIds)
             call.respond(HttpStatusCode.OK)
         }
 
-        post("/modules") {
+        post {
             val files = call.receiveModuleFiles()
             val response = configurationService.addModules(files)
-            call.respond(HttpStatusCode.OK, response)
+            call.respond(response)
         }
 
-        post("/modules/overwrite") {
+        post("/overwrite") {
             val files = call.receiveModuleFiles()
-            val response = configurationService.addModules(files, true)
-            call.respond(HttpStatusCode.OK, response)
+            val response = configurationService.addModules(files, overwrite = true)
+            call.respond(response)
         }
-
-        post("/update") {
-            val newConfig: HolonetConfiguration = call.receive()
-            configurationService.updateConfiguration(newConfig)
-            call.respond(HttpStatusCode.OK)
-        }
-
     }
 }
 
@@ -114,24 +137,26 @@ fun Application.module(
  * Receives multipart files from the call and saves them to temporary files.
  * @return A list of [PlatformFile] pointing to the saved temporary files.
  */
-private suspend fun ApplicationCall.receiveModuleFiles(): List<PlatformFile> {
-    val files = mutableListOf<PlatformFile>()
-    val multipart = receiveMultipart()
-
-    multipart.forEachPart { part ->
+private suspend fun ApplicationCall.receiveModuleFiles(): List<PlatformFile> = buildList {
+    receiveMultipart().forEachPart { part ->
         when (part) {
             is PartData.FileItem -> {
-                val fileName = part.originalFileName as String
-                val tempDir = File(System.getProperty("java.io.tmpdir"))
-                val tempFile = File(tempDir, fileName)
-                if (tempFile.exists()) {
-                    tempFile.delete()
-                }
+                val fileName = requireNotNull(part.originalFileName) { "File name is required" }
+                val tempFile = createTempFile(fileName)
                 part.provider().copyAndClose(tempFile.writeChannel())
-                files.add(PlatformFile(tempFile))
+                add(PlatformFile(tempFile))
             }
             else -> part.dispose()
         }
     }
-    return files
+}
+
+/**
+ * Creates a temporary file with the given name, deleting any existing file with the same name.
+ */
+private fun createTempFile(fileName: String): File {
+    val tempDir = File(System.getProperty("java.io.tmpdir"))
+    return File(tempDir, fileName).apply {
+        if (exists()) delete()
+    }
 }

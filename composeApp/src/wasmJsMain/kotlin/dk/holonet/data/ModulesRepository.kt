@@ -109,7 +109,7 @@ class ModulesRepository(private val httpClient: HttpClient) {
     fun saveConfiguration() {
         val holonetConfiguration = _positions.value.toHolonetConfiguration()
         repositoryScope.launch {
-            httpClient.post("/update") {
+            httpClient.post("/configuration") {
                 contentType(ContentType.Application.Json)
                 setBody(holonetConfiguration)
             }
