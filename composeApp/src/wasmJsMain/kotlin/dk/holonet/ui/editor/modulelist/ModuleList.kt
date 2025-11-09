@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -22,6 +23,9 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
@@ -29,7 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import compose.icons.LineAwesomeIcons
 import compose.icons.lineawesomeicons.PlusSolid
-import compose.icons.lineawesomeicons.Save
+import compose.icons.lineawesomeicons.TrashSolid
 import io.github.vinceglb.filekit.dialogs.FileKitMode
 import io.github.vinceglb.filekit.dialogs.FileKitType
 import io.github.vinceglb.filekit.dialogs.compose.rememberFilePickerLauncher
@@ -44,6 +48,18 @@ internal fun ModulesList(
     val state by viewModel.modules.collectAsState()
     val currentPosition by viewModel.currentPosition.collectAsState()
     val overwriteConfirmation by viewModel.overwriteConfirmation.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    if (showDeleteDialog) {
+        DeleteModulesDialog(
+            modules = state,
+            onDismiss = { showDeleteDialog = false },
+            onDelete = { pluginIds ->
+                viewModel.removeModule(pluginIds)
+                showDeleteDialog = false
+            }
+        )
+    }
 
     overwriteConfirmation?.let { files ->
         AlertDialog(
@@ -68,9 +84,8 @@ internal fun ModulesList(
 
     val fileLauncher = rememberFilePickerLauncher(
         mode = FileKitMode.Multiple(),
-        type = FileKitType.File(extensions = listOf("zip", "rar"))
+        type = FileKitType.File(extensions = listOf("jar"))
     ) { files ->
-        println("Selected files: $files")
         viewModel.uploadModules(files)
     }
 
@@ -131,7 +146,7 @@ internal fun ModulesList(
 
             TextButton(
                 onClick = {
-//                    viewModel.saveConfiguration()
+                    showDeleteDialog = true
                 },
                 modifier = Modifier.weight(1f).height(48.dp),
                 shape = RectangleShape
@@ -141,15 +156,15 @@ internal fun ModulesList(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
-                        imageVector = LineAwesomeIcons.Save,
-                        contentDescription = "Save configuration",
+                        imageVector = LineAwesomeIcons.TrashSolid,
+                        contentDescription = "Delete modules",
                         modifier = Modifier.size(24.dp)
                     )
 
                     Spacer(Modifier.width(8.dp))
 
                     Text(
-                        text = "Save",
+                        text = "Delete",
                         style = MaterialTheme.typography.labelLarge,
                         textAlign = TextAlign.Center
                     )
@@ -157,4 +172,65 @@ internal fun ModulesList(
             }
         }
     }
+}
+
+@Composable
+private fun DeleteModulesDialog(
+    modules: List<dk.holonet.core.HolonetSchema>,
+    onDismiss: () -> Unit,
+    onDelete: (List<String>) -> Unit
+) {
+    var selectedModules by remember { mutableStateOf(emptySet<String>()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete Modules") },
+        text = {
+            LazyColumn {
+                items(modules) { module ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedModules = if (module.pluginId in selectedModules) {
+                                    selectedModules - module.pluginId
+                                } else {
+                                    selectedModules + module.pluginId
+                                }
+                            }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Checkbox(
+                            checked = module.pluginId in selectedModules,
+                            onCheckedChange = {
+                                selectedModules = if (module.pluginId in selectedModules) {
+                                    selectedModules - module.pluginId
+                                } else {
+                                    selectedModules + module.pluginId
+                                }
+                            }
+                        )
+                        Spacer(Modifier.width(16.dp))
+                        Text(module.name)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onDelete(selectedModules.toList())
+              },
+                enabled = selectedModules.isNotEmpty()
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

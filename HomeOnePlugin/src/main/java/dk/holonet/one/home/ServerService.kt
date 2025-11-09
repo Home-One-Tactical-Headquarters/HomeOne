@@ -7,9 +7,9 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
-import io.ktor.http.content.streamProvider
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.install
 import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
@@ -20,6 +20,7 @@ import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
 import io.ktor.server.response.respond
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -82,35 +83,23 @@ fun Application.module(
             call.respond(HttpStatusCode.OK, schemas)
         }
 
-        get("/modules/names") {
-            val names = configurationService.getModuleNames()
-            call.respond(HttpStatusCode.OK, names)
-        }
-
-        post("/modules") {
-            val modules = call.receiveMultipart()
-            val files = mutableListOf<PlatformFile>()
-
-            modules.forEachPart { part ->
-                when (part) {
-                    is PartData.FileItem -> {
-                        val fileName = part.originalFileName as String
-                        val tempDir = File(System.getProperty("java.io.tmpdir"))
-                        val tempFile = File(tempDir, fileName)
-                        if (tempFile.exists()) {
-                            tempFile.delete()
-                        }
-                        part.provider().copyAndClose(tempFile.writeChannel())
-                        files.add(PlatformFile(tempFile))
-                    }
-                    else -> part.dispose()
-                }
-            }
-
-            configurationService.addModules(files)
+        delete("/modules") {
+            val pluginIds = call.receive<List<String>>()
+            configurationService.deleteModules(pluginIds)
             call.respond(HttpStatusCode.OK)
         }
 
+        post("/modules") {
+            val files = call.receiveModuleFiles()
+            val response = configurationService.addModules(files)
+            call.respond(HttpStatusCode.OK, response)
+        }
+
+        post("/modules/overwrite") {
+            val files = call.receiveModuleFiles()
+            val response = configurationService.addModules(files, true)
+            call.respond(HttpStatusCode.OK, response)
+        }
 
         post("/update") {
             val newConfig: HolonetConfiguration = call.receive()
@@ -119,4 +108,30 @@ fun Application.module(
         }
 
     }
+}
+
+/**
+ * Receives multipart files from the call and saves them to temporary files.
+ * @return A list of [PlatformFile] pointing to the saved temporary files.
+ */
+private suspend fun ApplicationCall.receiveModuleFiles(): List<PlatformFile> {
+    val files = mutableListOf<PlatformFile>()
+    val multipart = receiveMultipart()
+
+    multipart.forEachPart { part ->
+        when (part) {
+            is PartData.FileItem -> {
+                val fileName = part.originalFileName as String
+                val tempDir = File(System.getProperty("java.io.tmpdir"))
+                val tempFile = File(tempDir, fileName)
+                if (tempFile.exists()) {
+                    tempFile.delete()
+                }
+                part.provider().copyAndClose(tempFile.writeChannel())
+                files.add(PlatformFile(tempFile))
+            }
+            else -> part.dispose()
+        }
+    }
+    return files
 }

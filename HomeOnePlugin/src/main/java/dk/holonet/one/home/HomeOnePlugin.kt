@@ -13,6 +13,8 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.pf4j.Extension
 import org.pf4j.PluginWrapper
+import java.io.File
+import java.util.jar.JarFile
 
 class HomeOnePlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper), KoinComponent {
 
@@ -20,12 +22,15 @@ class HomeOnePlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper), KoinCompon
     private val configurationService: ConfigurationService by inject()
     private val serverService: ServerService = ServerService(configurationService)
 
+    private var extractedHomeOneDir: File? = null
+
     override fun start() {
         super.start()
 
         pluginScope.launch {
-            println("HomeOnePlugin started server on port 8081\nUsing files from ${wrapper.pluginPath}\\classes\\HomeOne")
-            serverService.start(path = "${wrapper.pluginPath}\\classes\\HomeOne")
+            val extractedDir = extractHomeOneFromJar("${wrapper.pluginPath}")
+            println("HomeOnePlugin started server on port 8081\nUsing files from ${extractedDir.absolutePath}")
+            serverService.start(path = extractedDir.absolutePath)
         }
     }
 
@@ -34,6 +39,8 @@ class HomeOnePlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper), KoinCompon
         println("HomeOnePlugin stopping server")
         serverService.stop()
         pluginScope.cancel()
+        extractedHomeOneDir?.deleteRecursively()
+        extractedHomeOneDir = null
     }
 
     @Extension
@@ -42,5 +49,25 @@ class HomeOnePlugin(wrapper: PluginWrapper) : HoloNetPlugin(wrapper), KoinCompon
         override fun render() {
             // No UI for this module
         }
+    }
+
+    private fun extractHomeOneFromJar(jarPath: String): File {
+        val tempDir = File(System.getProperty("java.io.tmpdir"))
+        val destDir = File(tempDir, "HomeOne_${System.currentTimeMillis()}")
+        val jarFile = JarFile(jarPath)
+        jarFile.entries().asSequence()
+            .filter { it.name.startsWith("HomeOne/") && !it.isDirectory }
+            .forEach { entry ->
+                val outFile = File(destDir, entry.name.removePrefix("HomeOne/"))
+                outFile.parentFile.mkdirs()
+                jarFile.getInputStream(entry).use { input ->
+                    outFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            }
+        jarFile.close()
+        extractedHomeOneDir = destDir
+        return destDir
     }
 }

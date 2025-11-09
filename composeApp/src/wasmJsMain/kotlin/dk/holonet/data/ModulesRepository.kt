@@ -11,6 +11,7 @@ import io.github.vinceglb.filekit.readBytes
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.onUpload
+import io.ktor.client.request.delete
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
@@ -20,6 +21,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -114,52 +116,62 @@ class ModulesRepository(private val httpClient: HttpClient) {
         }
     }
 
-    fun uploadModules(modules: List<PlatformFile>) {
-        repositoryScope.launch {
-            val filesData = modules.map { file ->
-                file.name to file.readBytes()
-            }
-
-            httpClient.post("/modules") {
-                setBody(
-                    MultiPartFormDataContent(
-                        formData {
-                            filesData.forEach { (fileName, fileBytes) ->
-                                append("files", fileBytes, Headers.build {
-                                    append(HttpHeaders.ContentType, ContentType.Application.Zip.toString())
-                                    append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
-                                })
-                            }
-                        }
-                    )
-                )
-                onUpload { bytesSentTotal, contentLength ->
-                    val progress = if (contentLength!! > 0) {
-                        bytesSentTotal.toDouble() / contentLength.toDouble()
-                    } else {
-                        0.0
-                    }
-                    val percentage = (progress * 100).toInt()
-//                    println("Upload progress: $percentage%")
-                }
-            }
-
-            loadModules()
-            delay(1000) // Small delay to ensure server processes the new modules
-            loadConfiguration()
+    suspend fun uploadModules(modules: List<PlatformFile>, overwrite: Boolean = false): List<String>? {
+        val filesData = modules.map { file ->
+            file.name to file.readBytes()
         }
+
+        val url = if (overwrite) "/modules/overwrite" else "/modules"
+
+        val response = httpClient.post(url) {
+            setBody(
+                MultiPartFormDataContent(
+                    formData {
+                        filesData.forEach { (fileName, fileBytes) ->
+                            append("files", fileBytes, Headers.build {
+                                append(HttpHeaders.ContentType, ContentType.Application.Zip.toString())
+                                append(HttpHeaders.ContentDisposition, "filename=\"$fileName\"")
+                            })
+                        }
+                    }
+                )
+            )
+            onUpload { bytesSentTotal, contentLength ->
+                val progress = if (contentLength!! > 0) {
+                    bytesSentTotal.toDouble() / contentLength.toDouble()
+                } else {
+                    0.0
+                }
+                val percentage = (progress * 100).toInt()
+//                    println("Upload progress: $percentage%")
+            }
+        }
+
+        if (!response.status.isSuccess()) return null
+        val errors = response.body<List<String>>()
+
+        println("Errors: $errors")
+
+        loadModules()
+        delay(1000) // Small delay to ensure server processes the new modules
+        loadConfiguration()
+
+        return errors
     }
 
-    suspend fun getModuleNames(): List<String> {
-        return httpClient.get("/modules/names").body<List<String>>()
+    suspend fun deleteModules(modules: List<String>) {
+        httpClient.delete("/modules") {
+            contentType(ContentType.Application.Json)
+            setBody(modules)
+        }
+
+        loadModules()
+        delay(1000) // Small delay to ensure server processes the new modules
+        loadConfiguration()
     }
 
     private fun loadConfiguration() {
         repositoryScope.launch {
-            /*if (_modules.value.isEmpty()) {
-                loadModules()
-            }*/
-
             loadModules()
 
             val holonetConfig = httpClient.get("/configuration").body<HolonetConfiguration>()

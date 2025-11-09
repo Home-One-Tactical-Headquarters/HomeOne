@@ -21,11 +21,15 @@ class ModuleListViewModel(
     private val _overwriteConfirmation = MutableStateFlow<List<PlatformFile>?>(null)
     val overwriteConfirmation: StateFlow<List<PlatformFile>?> = _overwriteConfirmation.asStateFlow()
 
-    private var filesToUpload: List<PlatformFile> = emptyList()
-
     fun addModule(module: HolonetSchema) {
         repository.currentPosition.value?.let {
             repository.updateModule(it, module, true)
+        }
+    }
+
+    fun removeModule(pluginIds: List<String>) {
+        viewModelScope.launch {
+            repository.deleteModules(pluginIds)
         }
     }
 
@@ -36,34 +40,32 @@ class ModuleListViewModel(
                 return@launch
             }
 
-            val existingModuleNames = repository.getModuleNames()
+            val response = repository.uploadModules(modules)
 
-            filesToUpload = modules
-
-            val conflictingFiles = modules.filter {
-                val moduleNameWithoutExt = it.name.removeSuffix(".zip").removeSuffix(".rar")
-                val moduleName = moduleNameWithoutExt.replace(Regex("(-\\d+(\\.\\d+)*)$"), "")
-                existingModuleNames.contains(moduleName)
-            }
-
-            if (conflictingFiles.isNotEmpty()) {
-                _overwriteConfirmation.value = conflictingFiles
+            if (response == null) {
+                // Handle error
             } else {
-                confirmUpload()
+                if (response.isEmpty()) {
+                    // Successful upload
+                    return@launch
+                }
+
+                // Handle existing modules
+                _overwriteConfirmation.value = modules.filter { it.name in response }
             }
         }
     }
 
     fun confirmUpload() {
-        if (filesToUpload.isNotEmpty()) {
-            repository.uploadModules(filesToUpload)
+        viewModelScope.launch {
+            if (_overwriteConfirmation.value?.isEmpty() == false) {
+                repository.uploadModules(_overwriteConfirmation.value!!, true)
+            }
+            _overwriteConfirmation.value = null
         }
-        filesToUpload = emptyList()
-        _overwriteConfirmation.value = null
     }
 
     fun cancelUpload() {
-        filesToUpload = emptyList()
         _overwriteConfirmation.value = null
     }
 }
