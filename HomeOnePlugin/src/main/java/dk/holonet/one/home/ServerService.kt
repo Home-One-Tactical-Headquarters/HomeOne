@@ -38,7 +38,7 @@ class ServerService(
     }
 
     private companion object {
-        const val SERVER_PORT = 8081
+        const val SERVER_PORT = 8080
         const val STOP_GRACE_PERIOD_MS = 1000L
         const val STOP_TIMEOUT_MS = 1000L
     }
